@@ -1,0 +1,35 @@
+<html>
+  
+<head>
+    <title>
+        jQuery unload() Method
+    </title>
+  
+    <script src=
+"https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
+    </script>
+</head>
+  
+<body style="text-align:center;">
+    <br/>
+    <br/>
+    <br/>
+    <h1 style="color:green;">   
+        GeeksForGeeks   
+    </h1>
+  
+    <p>When you click
+      <a href="https://ide.geeksforgeeks.org">
+        Go to geeks</a>, or close the window,
+      an alert box will be triggered.</p>
+  
+    <!-- Script to illustrates unload() method -->
+    <script>
+
+        $(window).on('beforeunload ',function() {
+    return 'Are you sure ?';
+});
+    </script>
+</body>
+  
+</html>

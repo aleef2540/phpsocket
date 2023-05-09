@@ -23,11 +23,17 @@
 	}
 
 	$(document).ready(function(){
-		var websocket = new WebSocket("ws://192.168.0.101:8090"); 
+		var websocket = new WebSocket("ws://aleef:2540@192.168.0.101:8090/test"); 
 
 		websocket.onopen = function(event) { 
-			showMessage("<div class='chat-connection-ack'>!สร้างการเชื่อมต่อ</div>");		
+			showMessage("<div class='chat-connection-ack'>!สร้างการเชื่อมต่อ</div>");
+			var messageJSON = {
+				type:'user_in',
+				chat_user: "aleef"
+			};
+			websocket.send(JSON.stringify(messageJSON));		
 		}
+
 		websocket.onmessage = function(event) {
 			var Data = JSON.parse(event.data);
 			showMessage("<div class='"+Data.message_type+"'>"+Data.message+"</div>");
@@ -41,16 +47,21 @@
 			showMessage("<div class='chat-connection-ack'>ปิดการเชื่อมต่อ</div>");
 		}; 
 		
+
 		$('#frmChat').on("submit",function(event){
 			event.preventDefault();
 			$('#chat-user').attr("type","hidden");		
 			var messageJSON = {
+				type:'user_chat',
 				chat_user: $('#chat-user').val(),
 				chat_message: $('#chat-message').val()
 			};
 			websocket.send(JSON.stringify(messageJSON));
 		});
+
+		
 	});
+
 	</script>
 	</head>
 	<body>

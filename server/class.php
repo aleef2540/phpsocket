@@ -1,5 +1,6 @@
 <?php
 class ChatHandler {
+
 	function send($message) {
 		global $clientSocketArray;
 		$messageLength = strlen($message);
@@ -62,7 +63,7 @@ class ChatHandler {
 		"Upgrade: websocket\r\n" .
 		"Connection: Upgrade\r\n" .
 		"WebSocket-Origin: $host_name\r\n" .
-		"WebSocket-Location: ws://$host_name:$port/demo/shout.php\r\n".
+		"WebSocket-Location: ws://$host_name:$port\r\n".
 		"Sec-WebSocket-Accept:$secAccept\r\n\r\n";
 		socket_write($client_socket_resource,$buffer,strlen($buffer));
 	}

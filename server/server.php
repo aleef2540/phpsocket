@@ -29,6 +29,8 @@ socket_listen($socketResource);
 echo 'Socket Is Ready !!'. PHP_EOL;
 
 $clientSocketArray = array($socketResource);
+$user_online = array();
+$user_map = array();
 
 while (true) {
 	$newSocketArray = $clientSocketArray;
@@ -41,14 +43,18 @@ while (true) {
 		
 		$newSocket = socket_accept($socketResource);
 		$clientSocketArray[] = $newSocket;
-		print_r($clientSocketArray);
+		//print_r($clientSocketArray);
 		
 		$header = socket_read($newSocket, 1024);
-		echo 'hearder : '.$header;
+		//echo 'hearder : '.$header;
 		$chatHandler->doHandshake($header, $newSocket, HOST_NAME, PORT);
+
 		
+		// get ip addres
 		socket_getpeername($newSocket, $client_ip_address);
+
 		$connectionACK = $chatHandler->newConnectionACK($client_ip_address);
+		//userconnect
 		
 		$chatHandler->send($connectionACK);
 		
@@ -56,19 +62,40 @@ while (true) {
 		unset($newSocketArray[$newSocketIndex]);
 	}
 	
+	//รับ massage แล้วใช้ chatHandler ส่ง
 	foreach ($newSocketArray as $newSocketArrayResource) {	
 		while(socket_recv($newSocketArrayResource, $socketData, 1024, 0) >= 1){
+			echo'massage in'. PHP_EOL;
+
 			$socketMessage = $chatHandler->unseal($socketData);
+			//echo $socketMessage. PHP_EOL;
 			$messageObj = json_decode($socketMessage);
 			
-			$chat_box_message = $chatHandler->createChatBoxMessage($messageObj->chat_user, $messageObj->chat_message);
-			$chatHandler->send($chat_box_message);
-			break 2;
+			$type = $messageObj->type;
+			$user = $messageObj->chat_user;
+			
+			if($type == 'user_in'){
+			    array_push($user_online,$user);
+				$user_map[$user] = $newSocketArrayResource;
+				echo "Connection from user : ".$user. PHP_EOL;
+				print_r($user_online);
+				print_r($user_map);
+			}else if($type == 'user_chat'){
+				echo "chat Message";
+				$chat_box_message = $chatHandler->createChatBoxMessage($messageObj->chat_user, $messageObj->chat_message);
+				$chatHandler->send($chat_box_message);
+				break 2;
+			}else if($type == 'user_out'){
+
+			}
+
+			
 		}
 		
 		$socketData = @socket_read($newSocketArrayResource, 1024, PHP_NORMAL_READ);
 		if ($socketData === false) { 
 			socket_getpeername($newSocketArrayResource, $client_ip_address);
+
 			$connectionACK = $chatHandler->connectionDisconnectACK($client_ip_address);
 			$chatHandler->send($connectionACK);
 			$newSocketIndex = array_search($newSocketArrayResource, $clientSocketArray);
