@@ -53,10 +53,9 @@ while (true) {
 		// get ip addres
 		socket_getpeername($newSocket, $client_ip_address);
 
-		$connectionACK = $chatHandler->newConnectionACK($client_ip_address);
-		//userconnect
-		
-		$chatHandler->send($connectionACK);
+		// $connectionACK = $chatHandler->newConnectionACK($client_ip_address);
+		// //userconnect
+		// $chatHandler->send($connectionACK);
 		
 		$newSocketIndex = array_search($socketResource, $newSocketArray);
 		unset($newSocketArray[$newSocketIndex]);
@@ -65,21 +64,30 @@ while (true) {
 	//รับ massage แล้วใช้ chatHandler ส่ง
 	foreach ($newSocketArray as $newSocketArrayResource) {	
 		while(socket_recv($newSocketArrayResource, $socketData, 1024, 0) >= 1){
-			echo'massage in'. PHP_EOL;
+			//echo'massage in'. PHP_EOL;
 
 			$socketMessage = $chatHandler->unseal($socketData);
-			//echo $socketMessage. PHP_EOL;
+			
 			$messageObj = json_decode($socketMessage);
-			
-			$type = $messageObj->type;
-			$user = $messageObj->chat_user;
-			
+
+			$type = '';
+			$user = '';
+			if($messageObj){
+				$type = $messageObj->type;
+				$user = $messageObj->chat_user;
+			}
+
 			if($type == 'user_in'){
-			    array_push($user_online,$user);
+			    //array_push($user_online,$user);
 				$user_map[$user] = $newSocketArrayResource;
 				echo "Connection from user : ".$user. PHP_EOL;
-				print_r($user_online);
-				print_r($user_map);
+				$connectionACKuser = $chatHandler->newConnectionACKuser($user);
+				//userconnect
+				$chatHandler->send($connectionACKuser);
+				// print_r($user_map);
+				$chat_box_message = $chatHandler->createUserOnline($user);
+				$chatHandler->send($chat_box_message);
+				break 2;
 			}else if($type == 'user_chat'){
 				echo "chat Message";
 				$chat_box_message = $chatHandler->createChatBoxMessage($messageObj->chat_user, $messageObj->chat_message);
@@ -95,9 +103,24 @@ while (true) {
 		$socketData = @socket_read($newSocketArrayResource, 1024, PHP_NORMAL_READ);
 		if ($socketData === false) { 
 			socket_getpeername($newSocketArrayResource, $client_ip_address);
+			// print_r($user_map);
 
-			$connectionACK = $chatHandler->connectionDisconnectACK($client_ip_address);
-			$chatHandler->send($connectionACK);
+			foreach($user_map as $user => $object) {
+				if($newSocketArrayResource == $object){
+					// echo 'user '. $user .' out';
+					unset($user_map[$user]);
+					echo "user Disconnect : ". $user . PHP_EOL;
+					$connectionACKuser = $chatHandler->connectionDisconnectACKuser($user);
+					$chatHandler->send($connectionACKuser);
+					// print_r($user_map);
+				}
+			  }
+
+			// $connectionACK = $chatHandler->connectionDisconnectACK($client_ip_address);
+			// $chatHandler->send($connectionACK);
+
+			
+			
 			$newSocketIndex = array_search($newSocketArrayResource, $clientSocketArray);
 			unset($clientSocketArray[$newSocketIndex]);			
 		}

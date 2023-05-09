@@ -11,6 +11,17 @@ class ChatHandler {
 		return true;
 	}
 
+	function update_list_user_online($message) {
+		global $clientSocketArray;
+		$messageLength = strlen($message);
+		foreach($clientSocketArray as $clientSocket)
+		{
+			@socket_write($clientSocket,$message,$messageLength);
+		}
+		return true;
+	}
+
+
 	function unseal($socketData) {
 		$length = ord($socketData[1]) & 127;
 		if($length == 126) {
@@ -74,6 +85,14 @@ class ChatHandler {
 		$ACK = $this->seal(json_encode($messageArray));
 		return $ACK;
 	}
+
+	function newConnectionACKuser($user) {
+		$message = 'user : ' . $user.' เชื่อมต่อ';
+		$messageArray = array('message'=>$message,'message_type'=>'chat-connection-ack');
+		$ACK = $this->seal(json_encode($messageArray));
+		return $ACK;
+	}
+
 	
 	function connectionDisconnectACK($client_ip_address) {
 		$message = 'ผู้ใช้ไอพี ' . $client_ip_address.' ออก';
@@ -81,10 +100,24 @@ class ChatHandler {
 		$ACK = $this->seal(json_encode($messageArray));
 		return $ACK;
 	}
+
+	function connectionDisconnectACKuser($user) {
+		$message = 'user : ' . $user.' ออก';
+		$messageArray = array('message'=>$message,'message_type'=>'chat-disconnection-ack');
+		$ACK = $this->seal(json_encode($messageArray));
+		return $ACK;
+	}
 	
 	function createChatBoxMessage($chat_user,$chat_box_message) {
 		$message = $chat_user . ": <div class='chat-box-message'>" . $chat_box_message . "</div>";
 		$messageArray = array('message'=>$message,'message_type'=>'chat-box-html');
+		$chatMessage = $this->seal(json_encode($messageArray));
+		return $chatMessage;
+	}
+
+	function createUserOnline($user) {
+		$message = "<p class='user' id='".$user."'>-" . $user . "</p>";
+		$messageArray = array('message'=>$message,'message_type'=>'user-online-html');
 		$chatMessage = $this->seal(json_encode($messageArray));
 		return $chatMessage;
 	}
